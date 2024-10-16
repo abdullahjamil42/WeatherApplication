@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Index</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> 
+</head>
+
+<style>
+    #main-blurred-background {
+        background-attachment: fixed;
+        background-size: cover; 
+        background-position: center;
+        filter: blur(5px); 
+        z-index: 0; 
+        position: absolute;
+        top: -20px; 
+        left: -20px; 
+        right: -20px;
+        bottom: -20px;
+    }
+    
+    #background-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.3);  
+        z-index: 1;  
+    }
+    
+    @media (max-width: 640px) {
+        #background-overlay {
+            background: rgba(0, 0, 0, 0.1); 
+        }
+    }
+    
+    
+    #blurred-background {
+        background-attachment: fixed;
+        background-size: cover; 
+        background-position: center; 
+        filter: blur(8px);  
+        z-index: 0;  
+        position: absolute;  
+        top: 0; 
+        left: 0; 
+        right: 0;  
+        bottom: 0; 
+    }
+    
+</style>
+<body class=" bg-gradient-to-l from-blue-500 to-blue-300 overflow-hidden font-montserrat grid grid-cols-6 w-screen h-screen gap-2">
+    <!-- Blurred Background -->
+    <div id="main-blurred-background" class="z-0 inset-0 "></div>
+    <div id="background-overlay"></div>  
+    
+    <!-- left panel -->
+    <div id="left-panel" class=" col-span-1 z-10 relative overflow-hidden" style="background: rgba(0, 83, 134, 0.5);">
+        <!-- Blurred Background -->
+        <div id="left-blurred-background" class="absolute inset-0 bg-cover bg-center shadow-black shadow-2xl" style="filter: blur(4px); z-index: 1;"></div>
+        
+        <div id="logo" class="m-5 flex content z-10 relative"> 
+            <img src="resources/logo2.png" class="mr-2" height="80" width="80">
+        </div>
+        <div class="content">
+            <a href="index.html" class="z-10 m-4 mt-10 rounded-3xl relative flex items-center justify-center transition-transform transform hover:scale-100 hover:translate-y-1 "style="background: rgba(0, 83, 134, 0.5);">
+                <span class="m-4">Dashboard </span>
+            </a>
+            <a id = "table" href="Table.html" class="z-10 m-4 relative flex rounded-3xl justify-center transition-transform transform hover:scale-100 hover:translate-y-1" style="background: rgba(0, 83, 134, 0.5);">
+                <span class="m-4">Tables</span>
+            </a>
+        </div>
+    </div>
+    
+    <!-- main panel -->
+    <div id="main-panel" class="m-5 z-10 grid grid-cols-3 grid-rows-6 overflow-y-auto col-span-5   rounded-2xl relative md:overflow-y-hidden sm:overflow-y-auto overflow-x-hidden"style="background: rgba(0, 83, 134, 0.5);">
+        <!-- Blurred Background -->
+        <div id="blurred-background" class=" inset-0 bg-cover bg-center" style="  background-attachment: fixed; filter: blur(8px); z-index: 1;"></div>
+        
+        <!-- Header -->
+        <header class="flex p-10 mt-4 h-20 row-span-1 justify-between items-center z-10 relative col-span-3">
+            <div class="flex items-center w-full">
+                <input type="text" id="Search" class="shadow-2xl border-2 h-10 p-2 rounded-2xl w-1/2 md:w-1/2" placeholder="Search">
+                <button onclick="fetchWeatherDataByCity()" class="bg-yellow-300 rounded-2xl w-20 h-10 ml-2 md:ml-4 hover:bg-yellow-200">Search</button>
+            </div>
+            <div>
+                <img src="resources/pfp1.jpg" alt="Profile" class="w-16 h-16 rounded-full mr-2 object-cover">
+            </div>
+        </header>
+        
+        <!-- WeatherData -->
+        <div class=" gap-4 pb-5 px-5 row-span-3 col-span-3 text-left z-10 relative">
+            <div id="CurrentWeatherData" class="md:overflow-hidden p-4   col-span-3 h-full rounded-2xl px-7 pt-10 flex flex-col justify-between" style="background: rgba(0, 83, 134, 0.5);">
+                <div class="flex justify-center items-center">
+                    <p class="text-center font-semibold text-2xl"><span id="City-name"></span></p>
+                    <i id="loc" class="fas fa-map-marker-alt ml-2" style="display:none; font-size: 30px; color: white;"></i>
+                </div>
+                <div class="flex flex-row items-center justify-center">
+                    <img id="Weather-Icon" src="" alt="Weather Icon" class="hidden md:block" style="height: 20vh;" />
+                    <div>    
+                        <p class="text-center font-semibold md:text-8xl sm:text-xl text-3xl"><span id="Temperature"></span></p>
+                        <p class="ml-4 text-center font-semibold text-m"><span id="FeelsLike"></span></p>                        
+                    </div>
+                </div>
+                <div class="mt-auto">
+                    <p class="text-left font-semibold">Humidity: <span id="Humidity"></span></p>
+                    <p class="text-left font-semibold">Wind Speed: <span id="Wind-Speed"></span></p>
+                    <p class="text-left font-semibold">Weather Description: <span id="Weather-Description"></span></p>
+                </div>
+                <button onclick="ChangeUnit()" id="switch" class="mb-2 text-xs font-semibold ml-auto">Switch to °F</button>
+            </div>
+        </div>
+        
+        <div class=" grid grid-cols-1 grid-row-3 md:grid-cols-3 h-full md:grid-rows-1 gap-4 px-5 pb-5 row-span-2 col-span-3 text-left z-10 relative">
+            <!-- Chart Containers -->
+            <div id="BarChart" class="row-span-1 col-span-1 z-10 h-50 rounded-2xl p-7  justify-between" style="background: rgba(0, 83, 134, 0.5);">
+                <canvas id="barChartCanvas"></canvas>
+            </div>
+            <div id="DonutChart" class="col-span-1 row-span-1  h-50 rounded-2xl p-7  justify-between" style="background: rgba(0, 83, 134, 0.5);">
+                <canvas id="doughnutChartCanvas"></canvas>
+            </div>
+            <div id="LineChart" class="col-span-1 row-span-1 h-50 rounded-2xl p-7 justify-between" style="background: rgba(0, 83, 134, 0.5);">
+                <canvas id="lineChartCanvas"></canvas>
+            </div>  
+        </div>
+    </div>
+    
+    <!-- Scripting -->
+    <script>
+        let fahrenheit = false; 
+        let currentTempCelsius; 
+        let currentMaxTempCelsius; 
+        let currentMinTempCelsius; 
+        let currentFeelsLikeCelsius;
+        const apiKey = 'e64edb040ff3cc7fa8794c5696885649';
+        
+        function fetchWeatherDataByGeolocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition((position) => {
+                    const latitude = position.coords.latitude;
+                    const longitude = position.coords.longitude;
+                    fetchWeatherByLocation(latitude, longitude);
+                }, (error) => {
+                    alert('Unable to retrieve location. Please enter a city.');
+                });
+            } else {
+                alert('Geolocation is not supported by this browser. Please enter a city.');
+            }
+        }
+        document.getElementById('table').addEventListener('click', function() {
+            const data = document.getElementById('City-name').textContent;
+            localStorage.setItem('sharedData', data); 
+            window.location.href = 'Table2.html'; 
+        });
+        
+        function fetchWeatherByLocation(lat, lon) {
+            $.ajax({
+                url: `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric`,
+                method: 'GET',
+                success: function(data) {
+                    displayWeatherData(data);
+                    displayCharts(data);  
+                },
+                error: function() {
+                    alert('Failed to retrieve weather data.');
+                }
+            });
+        }
+        
+        function fetchWeatherDataByCity() {
+            const cityname = document.getElementById('Search').value;
+            if (cityname) {
+                $.ajax({
+                    url: `https://api.openweathermap.org/data/2.5/forecast?q=${cityname}&appid=${apiKey}&units=metric`,
+                    method: 'GET',
+                    success: function(data) {
+                        displayWeatherData(data);
+                        displayCharts(data); 
+                    },
+                    error: function() {
+                        alert('Failed to retrieve weather data.');
+                    }
+                });
+            }
+        }
+        
+        function displayWeatherData(data) {
+            const cityname = data.city.name;
+            $('#City-name').text(cityname.toUpperCase());
+            currentTempCelsius = data.list[0].main.temp; 
+            currentMaxTempCelsius = data.list[0].main.temp_max;
+            currentMinTempCelsius = data.list[0].main.temp_min;
+            currentFeelsLikeCelsius = data.list[0].main.feels_like;
+            
+            $('#Temperature').text(currentTempCelsius + '°C');
+            $('#FeelsLike').text(currentMaxTempCelsius + '° /' + currentMinTempCelsius + '° Feels like: ' + currentFeelsLikeCelsius + '°');
+            $('#Humidity').text(data.list[0].main.humidity + '%');
+            $('#Wind-Speed').text(data.list[0].wind.speed + ' km/h');
+            $('#Weather-Description').text(data.list[0].weather[0].description);
+            
+            const iconCode = data.list[0].weather[0].icon;
+            const iconUrl = `http://openweathermap.org/img/wn/${iconCode}@2x.png`;
+            $('#Weather-Icon').attr('src', iconUrl).show();
+            $('#loc').show();
+            setBlurredBackground(data.list[0].weather[0].main);
+        }
+        
+        function displayCharts(data) {
+            const labels = [];
+            const temps = [];
+            const weatherCounts = {};
+            
+            for (let i = 0; i < data.list.length; i += 8) {  
+                labels.push(new Date(data.list[i].dt_txt).toLocaleDateString());
+                temps.push(data.list[i].main.temp);
+                
+                const weatherCondition = data.list[i].weather[0].main;
+                weatherCounts[weatherCondition] = (weatherCounts[weatherCondition] || 0) + 1;
+            }
+            
+             const barChart = new Chart(document.getElementById('barChartCanvas'), {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Temperature (°C)',
+                        data: temps,
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    animations: {
+                        y: {
+                            from: 500,
+                            easing: 'easeOutBounce',
+                            delay: 100
+                        }
+                    }
+                }
+            });
+            
+             const doughnutChart = new Chart(document.getElementById('doughnutChartCanvas'), {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(weatherCounts),
+                    datasets: [{
+                        label: 'Weather Conditions',
+                        data: Object.values(weatherCounts),
+                        backgroundColor: ['rgba(255, 99, 132, 0.2)', 'rgba(54, 162, 235, 0.2)', 'rgba(255, 206, 86, 0.2)', 'rgba(75, 192, 192, 0.2)', 'rgba(153, 102, 255, 0.2)'],
+                        borderColor: ['rgba(255, 99, 132, 1)', 'rgba(54, 162, 235, 1)', 'rgba(255, 206, 86, 1)', 'rgba(75, 192, 192, 1)', 'rgba(153, 102, 255, 1)'],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    animations: {
+                        y: {
+                            from: 500,
+                            easing: 'easeOutBounce',
+                            delay: 100
+                        }
+                    }
+                }
+            });
+            
+            const lineChart = new Chart(document.getElementById('lineChartCanvas'), {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Temperature (°C)',
+                        data: temps,
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    animations: {
+                        x: {
+                            from: -500,
+                            easing: 'easeOutBounce',
+                            duration: 1000
+                        }
+                    }
+                }
+            });
+        }
+        
+        function ChangeUnit() {
+            if (fahrenheit) {
+                $('#Temperature').text(currentTempCelsius + '°C');
+                $('#FeelsLike').text(currentMaxTempCelsius + '° / ' + currentMinTempCelsius + '° Feels like: ' + currentFeelsLikeCelsius + '°');
+                $('#switch').text('Switch to °F');
+            } else {
+                const tempFahrenheit = (currentTempCelsius * 9/5) + 32;
+                const maxTempFahrenheit = (currentMaxTempCelsius * 9/5) + 32;
+                const minTempFahrenheit = (currentMinTempCelsius * 9/5) + 32;
+                const feelsLikeFahrenheit = (currentFeelsLikeCelsius * 9/5) + 32;
+                
+                $('#Temperature').text(tempFahrenheit.toFixed(2) + '°F');
+                $('#FeelsLike').text(maxTempFahrenheit.toFixed(2) + '° / ' + minTempFahrenheit.toFixed(2) + '° Feels like: ' + feelsLikeFahrenheit.toFixed(2) + '°');
+                $('#switch').text('Switch to °C');
+            }
+            fahrenheit = !fahrenheit;
+        }
+        
+        function setBlurredBackground(weather) {
+            const weatherBackgrounds = {
+                "Rain": "./resources/rainy-weather.gif",
+                "Snow": "./resources/snowy-weather.gif",
+                "Clear": "./resources/sunny-weather.gif",
+                "Clouds": "./resources/cloudy-weather.gif",
+                "Drizzle": "./resources/drizzle-weather.gif",
+                "Mist": "./resources/Mist.gif",
+                "Thunderstorm": "./resources/thunderstorm-weather.gif",
+                "Fog": "./resources/fog-weather.gif",
+                "Smoke": "./resources/smoke.gif",
+                "Haze": "./resources/Haze.gif"
+            };
+            const backgroundImage = weatherBackgrounds[weather] || './resources/background.jpg';
+            document.getElementById('blurred-background').style.backgroundImage = `url('${backgroundImage}')`;
+            document.getElementById('left-blurred-background').style.backgroundImage = `url('${backgroundImage}')`;
+            document.getElementById('main-blurred-background').style.backgroundImage = `url('${backgroundImage}')`;
+        }
+        
+        window.onload = fetchWeatherDataByGeolocation;
+        
+    </script>
+</body>
+</html>
