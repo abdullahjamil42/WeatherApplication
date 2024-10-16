@@ -1,165 +1,381 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Index</title>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" />
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>  
-</head>
+const typingForm = document.querySelector(".typing-form");
+const chatContainer = document.querySelector(".chat-list");
+const suggestions = document.querySelectorAll(".suggestion");
+const deleteChatButton = document.querySelector("#delete-chat-button");
+let userMessage = null;
+let isResponseGenerating = false;
+const API_KEY = "AIzaSyB54azXsy3PoDiyaXFq7HRyV8RAyv8juXM";  
+const API_URL = `https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key=${API_KEY}`;
 
-
-<style>
-    #main-blurred-background {
-    background-attachment: fixed;
-    background-size: cover;
-    background-position: center;
-    filter: blur(5px);
-    z-index: 0;
-    position: absolute;
-    top: -20px;
-    left: -20px;
-    right: -20px;
-    bottom: -20px;
+const loadDataFromLocalstorage = () => {
+  const savedChats = localStorage.getItem("saved-chats");
+  //delete chat
+  chatContainer.innerHTML = savedChats || '';
+  document.body.classList.toggle("hide-header", savedChats);
+  
+  chatContainer.scrollTo(0, chatContainer.scrollHeight); // Scroll to  bottom
 }
 
-#background-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.3);
-    z-index: 1;
+const createMessageElement = (content, ...classes) => {
+  const div = document.createElement("div");
+  div.classList.add("message", ...classes);
+  div.innerHTML = content;
+  return div;
 }
 
-@media (max-width: 640px) {
-    #background-overlay {
-        background: rgba(0, 0, 0, 0.1);
+// Show typing effect by displaying words one by one
+const showTypingEffect = (text, textElement, incomingMessageDiv) => {
+  const words = text.split(' ');
+  let currentWordIndex = 0;
+  
+  const typingInterval = setInterval(() => {
+     textElement.innerText += (currentWordIndex === 0 ? '' : ' ') + words[currentWordIndex++];
+    incomingMessageDiv.querySelector(".icon").classList.add("hide");
+    
+     if (currentWordIndex === words.length) {
+      clearInterval(typingInterval);
+      isResponseGenerating = false;
+      incomingMessageDiv.querySelector(".icon").classList.remove("hide");
+      localStorage.setItem("saved-chats", chatContainer.innerHTML);  
     }
+    chatContainer.scrollTo(0, chatContainer.scrollHeight); 
+  }, 75);
 }
 
+ const generateAPIResponse = async (incomingMessageDiv) => {
+  const textElement = incomingMessageDiv.querySelector(".text"); // Getting text element
+  
+  try {
+     const response = await fetch(API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ 
+        contents: [{ 
+          role: "user", 
+          parts: [{ text: userMessage }] 
+        }] 
+      }),
+    });
     
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error.message);
     
-    #blurred-background {
-        background-attachment: fixed; 
-        background-size: cover; 
-        background-position: center;  
-        filter: blur(8px);  
-        z-index: 0;
-        position: absolute;  
-        top: 0; 
-        left: 0; 
-        right: 0;  
-        bottom: 0;  
+     const apiResponse = data?.candidates[0].content.parts[0].text.replace(/\*\*(.*?)\*\*/g, '$1');
+    showTypingEffect(apiResponse, textElement, incomingMessageDiv); // Show typing effect
+  } catch (error) { // Handle error
+    isResponseGenerating = false;
+    textElement.innerText = error.message;
+    textElement.parentElement.closest(".message").classList.add("error");
+  } finally {
+    incomingMessageDiv.classList.remove("loading");
+  }
+}
+
+ const showLoadingAnimation = () => {
+  const html = `<div class="message-content">
+    <div class = "grid grid-cols-6"> 
+      <img class="avatar h-10 col-span-1" src="./resources/gemini.png" alt="Gemini avatar">
+      <p class="text overflow-auto text-white col-span-5 bg-gray-400 rounded-xl p-3"></p>
+    </div>
+    <div class="loading-indicator">
+      <div class="loading-bar"></div>
+      <div class="loading-bar"></div>
+      <div class="loading-bar"></div>
+    </div>
+  </div>
+  <span onClick="copyMessage(this)" class="m-3 icon material-symbols-rounded">content_copy</span>`;
+  
+  const incomingMessageDiv = createMessageElement(html, "incoming", "loading");
+  chatContainer.appendChild(incomingMessageDiv);
+  
+  chatContainer.scrollTo(0, chatContainer.scrollHeight); // Scroll to the bottom
+  generateAPIResponse(incomingMessageDiv);
+}
+
+ const copyMessage = (copyButton) => {
+  const messageText = copyButton.parentElement.querySelector(".text").innerText;
+  
+  navigator.clipboard.writeText(messageText);
+  copyButton.innerText = "done";  
+  setTimeout(() => copyButton.innerText = "content_copy", 1000);
+}
+
+ 
+const showResponse = (response) => {
+  const html = `<div class="message-content">
+    <div class = "grid grid-cols-6"> 
+      <img class="avatar h-10 col-span-1" src="./resources/gemini.png" alt="Gemini avatar">
+      <p class="text overflow-auto text-white col-span-5 bg-gray-400 rounded-xl p-3"></p>
+    </div>
+  </div>`;
+  
+  const incomingMessageDiv = createMessageElement(html, "incoming");
+  incomingMessageDiv.querySelector(".text").innerText = response;
+  chatContainer.appendChild(incomingMessageDiv);
+  
+  chatContainer.scrollTo(0, chatContainer.scrollHeight); // Scroll to the bottom
+  localStorage.setItem("saved-chats", chatContainer.innerHTML); // Save chats to local storage
+}
+
+ const handleOutgoingChat = () => {
+  userMessage = typingForm.querySelector(".typing-input").value.trim(); // Get user input
+  
+  if (!userMessage || isResponseGenerating) return;   
+  const html = `<div class="message-content m-4">
+    <div class="grid grid-cols-6 justify-between "> 
+      <p class="text overflow-auto text-white col-span-5 bg-blue-400 rounded-xl p-3"></p>
+      <img class="avatar justify-between w-full rounded-full ml-4" src="./resources/pfp1.jpg" alt="User avatar">
+    </div>
+  </div>`;
+  
+  
+  const outgoingMessageDiv = createMessageElement(html, "outgoing");
+  outgoingMessageDiv.querySelector(".text").innerText = userMessage;
+  chatContainer.appendChild(outgoingMessageDiv);
+  
+  typingForm.reset();  
+  document.body.classList.add("hide-header");
+  chatContainer.scrollTo(0, chatContainer.scrollHeight);  
+  
+ 
+ 
+  const lowerInput = userMessage.toLowerCase();
+  if (lowerInput.includes("highest")) 
+  {
+    const highestTemperature = weatherData.reduce((max, entry) => {
+      return Math.max(max, entry.main.temp);
+  }, -Infinity); 
+  
+  showResponse(`Highest Temperature: ${highestTemperature} °C`);
+  } 
+  else if (lowerInput.includes("lowest temperature")) 
+  {
+    const minTemp = Math.min(...weatherData.map(data => data.main.temp_min));
+    const response = `The lowest temperature this week is ${minTemp}°C.`;
+    showResponse(response);
+  }
+  else if (lowerInput.includes("average temperature")) 
+  {
+    const avgTemp = weatherData.reduce((sum, data) => sum + data.main.temp, 0) / weatherData.length;
+    const response = `The average temperature this week is ${avgTemp.toFixed(2)}°C.`;
+    showResponse(response);
+  }
+  else if (lowerInput.includes("sort")) 
+  {
+    const response = `Do you want to sort data in ascending order or in descending order.`;
+    showResponse(response);
+  }
+  
+  else if (lowerInput.includes("ascending")) 
+  {
+    weatherData.sort((a, b) => a.main.temp - b.main.temp);
+    displayWeatherData(weatherData); 
+    const response = `Sorted by temperature in ascending order.`;
+    showResponse(response);
+  }
+  
+  else if (lowerInput.includes("descending")) 
+  {
+    weatherData.sort((a, b) => b.main.temp - a.main.temp); 
+    displayWeatherData(weatherData);  
+    const response = `Sorted by temperature in descending temperature.`;
+    showResponse(response);
+  }
+  else if (lowerInput.includes("reset")) 
+  {
+    weatherData = "";
+    weatherData = [...unsortedWeatherData];
+    displayWeatherData(weatherData);  
+    const response = `Sorted reversed.`;
+    showResponse(response);
+  }
+  else if (lowerInput.includes("no rain")) 
+  {
+    weatherData = weatherData.filter(entry => 
+    !entry.weather[0].description.includes('rain')
+    );
+    
+    displayWeatherData(weatherData);  
+    const response = `Rainy days excluded.`;
+    showResponse(response);
+  }
+  
+  else
+  {
+     showLoadingAnimation(); 
+  }
+}
+
+
+ 
+
+ deleteChatButton.addEventListener("click", () => {
+  if (confirm("Are you sure you want to delete all the chats?")) {
+    localStorage.removeItem("saved-chats");
+    loadDataFromLocalstorage();
+  }
+});
+
+// Set userMessage and handle outgoing chat when a suggestion is clicked
+suggestions.forEach(suggestion => {
+  suggestion.addEventListener("click", () => {
+    userMessage = suggestion.querySelector(".text").innerText;
+    handleOutgoingChat();
+  });
+});
+
+// Prevent default form submission and handle outgoing chat
+typingForm.addEventListener("submit", (e) => {
+  e.preventDefault(); 
+  handleOutgoingChat();
+});
+
+
+let fahrenheit = false;
+let currentTempCelsius;
+let currentMaxTempCelsius;
+let currentMinTempCelsius;
+let currentFeelsLikeCelsius;
+const apiKey = 'e64edb040ff3cc7fa8794c5696885649';
+const geminiAPIkey ='AIzaSyB54azXsy3PoDiyaXFq7HRyV8RAyv8juXM';
+let weatherData = [];
+let currentPage = 1; 
+const rowsPerPage = 10;
+let unsortedWeatherData = [];
+
+
+const receivedData = localStorage.getItem('sharedData'); 
+fetchWeatherDataDefault(receivedData)
+
+document.getElementById('send-message').addEventListener('click', sendMessage);
+document.getElementById('City-name').innerText = receivedData || alert('No data received');
+
+function fetchWeatherData() {
+  const cityname = document.getElementById('Search').value;
+  const url = `https://api.openweathermap.org/data/2.5/weather?q=${cityname}&appid=${apiKey}&units=metric`;
+  
+  $.ajax({
+    url: url,
+    method: 'GET',
+    success: function(data) {
+      const weatherInfo = `Current weather in ${data.name}: ${data.weather[0].description}, ${data.main.temp}°C.`;
+      displayMessage(weatherInfo, 'bot');
+    },
+    error: function(xhr, status, error) {
+      console.error('Error fetching weather data:', error);
+      displayMessage('Could not fetch weather data. Please try again later.', 'bot');
     }
-    
-</style>
-<body class=" bg-gradient-to-l from-blue-500 to-blue-300 overflow-hidden font-montserrat grid grid-cols-6 w-screen h-screen gap-2">
-    <!-- Blurred Background -->
-    <div id="main-blurred-background" class="z-0 inset-0 "></div>
-    <div id="background-overlay"></div>  
-    
-    <!-- left panel -->
-    <div id="left-panel" class=" col-span-1 z-10 relative overflow-hidden" style="background: rgba(0, 83, 134, 0.5);">
-        <!-- Blurred Background -->
-        <div id="left-blurred-background" class="absolute inset-0 bg-cover bg-center shadow-black shadow-2xl" style="filter: blur(4px); z-index: 1;"></div>
+  });
+}
+function fetchWeatherDataDefault(receivedData) {
+  if (receivedData) {
+    $.ajax({
+      url: `https://api.openweathermap.org/data/2.5/forecast?q=${receivedData}&appid=${apiKey}&units=metric`,
+      method: 'GET',
+      success: function(data) {
+        $('#City-name').text(receivedData);
+        weatherData = data.list; // Store the list of weather data
+        unsortedWeatherData =  data.list;
         
-        <div id="logo" class="m-5 flex content z-10 relative"> 
-            <img src="resources/logo2.png" class="mr-2" height="80" width="80">
-        </div>
-        <div class="content">
-            <a href="index.html" class="z-10 m-4 mt-10 rounded-3xl relative flex items-center justify-center transition-transform transform hover:scale-100 hover:translate-y-1 "style="background: rgba(0, 83, 134, 0.5);">
-                <span class="m-4">Dashboard </span>
-            </a>
-            <a id = "table" href="Table3.html" class="z-10 m-4 relative flex rounded-3xl justify-center transition-transform transform hover:scale-100 hover:translate-y-1" style="background: rgba(0, 83, 134, 0.5);">
-                <span class="m-4">Tables</span>
-            </a>
-        </div>
-    </div>
-    
-    
-    <!-- main panel -->
-    <div id="main-panel" class="m-5 grid grid-cols-3 grid-rows-6 overflow-y-auto col-span-5   rounded-2xl relative md:overflow-y-hidden sm:overflow-y-auto overflow-x-hidden"style="background: rgba(0, 83, 134, 0.5);">
-        <!-- Blurred Background -->
-        <div id="blurred-background" class="inset-0 bg-cover bg-center" style="background-attachment: fixed; filter: blur(8px); z-index: 1;"></div>
+        setBlurredBackground(data.list[0].weather[0].main);
         
-        <!-- Header -->
-        <header class="flex p-10 mt-4 h-20 row-span-1 justify-between items-center z-10 relative col-span-3">
-            <div class="flex items-center w-full">
-                <input type="text" id="Search" class="shadow-2xl border-2 h-10 p-2 rounded-2xl w-1/2 md:w-1/2" placeholder="Search">
-                <button onclick="fetchWeatherDataByCity()" class="bg-yellow-300 rounded-2xl w-20 h-10 ml-2 md:ml-4 hover:bg-yellow-200">Search</button>
-            </div>
-            <div>
-                <img src="resources/pfp1.jpg" alt="Profile" class="w-16 h-16 rounded-full mr-2 object-cover">
-            </div>
-        </header>
-        
-        <div class="grid grid-cols-1 row-span-5 md:grid-cols-3 h-full gap-4 px-5 pb-5 col-span-3 text-left z-10 relative">
-            
-            <div id="CurrentWeatherData" class="overflow-hidden md:col-span-2 z-10 rounded-2xl px-10 justify-between w-full" style="height:75.6vh; background: rgba(0, 83, 134, 0.5);">
-                
-                
-                <p class="text-center font-semibold text-xs sm:text-sm pt-4 h-10">Showing Data for <span id="City-name"></span></p>
-                <div class="md:mb-20 overflow-auto">       
-                    <table class="w-full">
-                        <thead>
-                            <tr>
-                                <th class="py-2 px-1 text-sm text-left">No.</th>
-                                <th class="py-2 px-1 text-sm text-left">Date</th>
-                                <th class="py-2 px-1 text-sm text-left">Temperature (°C)</th>
-                                <th class="py-2 px-1 text-sm text-left">Humidity (%)</th>
-                                <th class="py-2 px-1 text-sm text-left">Wind Speed (km/h)</th>
-                                <th class="py-2 pl-2 px-1 text-sm text-left">Description</th>
-                            </tr>
-                        </thead>
-                        <tbody id="weather-table-body" class="text-gray-900">
-                         </tbody>
-                    </table>
-                </div>
-                
-                <div class="flex justify-between mt-4 text-xs md:text-sm">
-                    <button id="prevPage" class="bg-blue-300 rounded px-2 py-1 md:px-4 md:py-2 hover:bg-blue-500" onclick="changePage(-1)" disabled>Previous</button>
-                    <span id="page-info" class="self-center"></span>
-                    <button id="nextPage" class="bg-blue-300 rounded px-2 py-1 md:px-4 md:py-2 hover:bg-blue-500" onclick="changePage(1)">Next</button>
-                </div>
-            </div>
-            
-             <div class="grid grid-cols-1 gap-4  pb-5 h-full md:col-span-1 text-left z-10">
-                <div id="Chatbot" class="z-10 rounded-2xl  flex flex-col h-full  w-full" style="height:75.6vh ; background: linear-gradient(to bottom, rgba(0, 83, 134, 0.5), rgba(0, 31, 41, 0.5));">
-                    <header class="header px-4 pt-4 pb-2 rounded-t-2xl" style=" background: linear-gradient(to top, rgba(0, 83, 134, 0.1), rgba(0, 31, 41, 0.5));">
-                        <h1 class="title text-white text-sm sm:text-base">Hello, there</h1>
-                        <p class="subtitle text-gray-300 text-xs sm:text-sm">How can I help you today?</p>
-                    </header>
-                    
-                    <div class="chat-list flex-1   overflow-auto mx-4"></div>
-                    
-                    <div class="typing-area px-3 pb-4 pt-3 rounded-b-2xl "style=" background: linear-gradient(to bottom, rgba(0, 83, 134, 0.1), rgba(0, 31, 41, 0.5));">
-                        <form action="#" class="typing-form flex items-center">
-                            <div class="action-buttons flex justify-between  mr-2">
-                                <span id="delete-chat-button" class="icon material-symbols-rounded text-white">delete</span>
-                            </div>  
-                            <div class="input-wrapper flex-grow mr-2">
-                                <input type="text" placeholder="Enter a prompt here" class="typing-input w-full rounded-md p-2 mb-0.5 text-xs" required />
-                            </div>
-                            <button id="send-message-button" class="icon material-symbols-rounded bg-blue-500 text-white p-1.5 rounded-md">send</button>
-                            
-                        </form>
-                        
-                        <p class="disclaimer-text text-gray-300 mt-1 text-xs">
-                            Gemini may display inaccurate info, including about people, so double-check its responses.
-                        </p>
-                    </div>
-                </div>    
-            </div>
-        </div>
-    </div>
+        displayWeatherData(weatherData);
+      },
+      error: function() {
+        // alert('Failed to retrieve weather data.');
+      }
+    });
+  }
+}
+
+function displayWeatherData(weatherDataArray) {
+  const tbody = document.getElementById('weather-table-body');
+  tbody.innerHTML = '';  
+  
+  const startIndex = (currentPage - 1) * rowsPerPage;  
+  const endIndex = Math.min(startIndex + rowsPerPage, weatherDataArray.length);  
+
+  for (let i = startIndex; i < endIndex; i++) {
+    const weather = weatherDataArray[i];
+    const date = new Date(weather.dt * 1000).toLocaleString();  
+    const temp = (weather.main.temp);
+    const humidity = weather.main.humidity;
+    const windSpeed = Math.round(weather.wind.speed);
+    const description = weather.weather[0].description.charAt(0).toUpperCase() + weather.weather[0].description.slice(1);  
     
-    <!-- Scripting -->
-    <script src="script.js"></script>
-</body>
-</html>
+    const row = `
+    <tr>
+      <td class="w-18 text-sm py-2 px-1">${i + 1}</td>
+      <td class="text-xs py-2 px-1">${date}</td>
+      <td class="text-xs py-2 px-1">${temp}°C</td>
+      <td class="text-xs py-2 px-1">${humidity}%</td>
+      <td class="text-xs py-2 px-1">${windSpeed} km/h</td>
+      <td class="text-xs pl-2 pt-2 px-1 no-wrap">${description}</td>
+    </tr>
+    `;
+    tbody.innerHTML += row; // Add the row to the table body
+  }
+  
+  document.getElementById('page-info').textContent = `Page ${currentPage} of ${Math.ceil(weatherDataArray.length / rowsPerPage)}`;
+  
+  document.getElementById('prevPage').disabled = currentPage === 1;
+  document.getElementById('nextPage').disabled = currentPage >= Math.ceil(weatherDataArray.length / rowsPerPage);
+}
+
+
+function changePage(direction) {
+  currentPage += direction;
+  displayWeatherData(weatherData);  
+}
+
+function setBlurredBackground(weather) {
+  const weatherBackgrounds = {
+    "Rain": "./resources/rainy-weather.gif",
+    "Snow": "./resources/snowy-weather.gif",
+    "Clear": "./resources/sunny-weather.gif",
+    "Clouds": "./resources/cloudy-weather.gif",
+    "Drizzle": "./resources/drizzle-weather.gif",
+    "Mist": "./resources/Mist.gif",
+    "Thunderstorm": "./resources/thunderstorm-weather.gif",
+    "Fog": "./resources/fog-weather.gif",
+    "Smoke": "./resources/smoke.gif",
+    "Haze": "./resources/Haze.gif"
+  };
+  const backgroundImage = weatherBackgrounds[weather] || './resources/background.jpg';
+  document.getElementById('blurred-background').style.backgroundImage = `url('${backgroundImage}')`;
+  document.getElementById('left-blurred-background').style.backgroundImage = `url('${backgroundImage}')`;
+  document.getElementById('main-blurred-background').style.backgroundImage = `url('${backgroundImage}')`;
+
+}
+
+
+
+
+function fetchWeatherDataByCity() {
+  const cityname = document.getElementById('Search').value;
+  if (cityname) {
+    $.ajax({
+      url: `https://api.openweathermap.org/data/2.5/forecast?q=${cityname}&appid=${apiKey}&units=metric`,
+      method: 'GET',
+      success: function(data) {
+        $('#City-name').text(cityname.toUpperCase());
+        weatherData = data.list;  
+        unsortedWeatherData = data.list;
+        setBlurredBackground(data.list[0].weather[0].main);  
+        displayWeatherData(weatherData);  
+        displayCharts(data);  
+      },
+      error: function() {
+        alert('Failed to retrieve weather data.'); 
+      }
+    });
+  } else {
+    alert("Please enter a city name");
+  }
+}
+
+
+window.onload = fetchWeatherDataDefault;
+
+
+loadDataFromLocalstorage();
