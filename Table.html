@@ -58,6 +58,7 @@
         bottom: 0;  
     }
     
+    
 </style>
 <body class=" bg-gradient-to-l from-blue-500 to-blue-300 overflow-hidden font-montserrat grid grid-cols-6 w-screen h-screen gap-2">
     <!-- Blurred Background -->
@@ -73,10 +74,10 @@
             <img src="resources/logo2.png" class="mr-2" height="80" width="80">
         </div>
         <div class="content">
-            <a href="index.html" class="z-10 m-4 mt-10 rounded-3xl relative flex items-center justify-center transition-transform transform hover:scale-100 hover:translate-y-1 "style="background: rgba(0, 83, 134, 0.5);">
-                <span class="m-4">Dashboard </span>
+            <a href="index.html" class="z-10 md:m-4 sm:m-1 mt-10 rounded-3xl relative flex items-center justify-center transition-transform transform hover:scale-100 hover:translate-y-1 "style="background: rgba(0, 83, 134, 0.5);" >
+                <span class="m-4 text-xs md:text-sm">Dashboard </span>
             </a>
-            <a id = "table" href="Table3.html" class="z-10 m-4 relative flex rounded-3xl justify-center transition-transform transform hover:scale-100 hover:translate-y-1" style="background: rgba(0, 83, 134, 0.5);">
+            <a id = "table" href="Table3.html" class="z-10 md:m-4 sm:m-1 mt-4 relative flex rounded-3xl justify-center transition-transform transform hover:scale-100 hover:translate-y-1"  style="background: rgba(0, 83, 134, 0.5);">
                 <span class="m-4">Tables</span>
             </a>
         </div>
@@ -101,7 +102,7 @@
         
         <div class="grid grid-cols-1 row-span-5 md:grid-cols-3 h-full gap-4 px-5 pb-5 col-span-3 text-left z-10 relative">
             
-            <div id="CurrentWeatherData" class="sm:overflow-auto overflow-hidden md:col-span-2 z-10 rounded-2xl px-10 justify-between w-full" style="height:75.6vh; background: rgba(0, 83, 134, 0.5);">
+            <div id="CurrentWeatherData" class="overflow-auto   md:col-span-2 z-10 rounded-2xl px-3 md:px-10 justify-between w-full" style="height:75.6vh; background: rgba(0, 83, 134, 0.5);">
                 
                 
                 <p class="text-center font-semibold text-xs sm:text-sm pt-4 h-10">Showing Data for <span id="City-name"></span></p>
@@ -110,11 +111,11 @@
                         <thead>
                             <tr>
                                 <th class="py-2 px-1 text-sx text-left">No.</th>
-                                <th class="py-2 px-1 text-sx text-left">Date</th>
-                                <th class="py-2 px-1 text-sx text-left">Temperature (°C)</th>
-                                <th class="py-2 px-1 text-sx text-left">Humidity (%)</th>
-                                <th class="py-2 px-1 text-sx text-left">Wind Speed (km/h)</th>
-                                <th class="py-2 pl-2 px-1 text-sx text-left">Description</th>
+                                <th class="py-2  text-sx text-left">Date</th>
+                                <th class="py-2  text-sx text-left">Temperature (°C)</th>
+                                <th class="py-2  text-sx text-left">Humidity (%)</th>
+                                <th class="py-2  text-sx text-left">Wind Speed (km/h)</th>
+                                <th class="py-2  px-1 text-sx text-left">Description</th>
                             </tr>
                         </thead>
                         <tbody id="weather-table-body" class="text-gray-900">
@@ -122,10 +123,10 @@
                     </table>
                 </div>
                 
-                <div class="flex justify-between mt-4 text-xs md:text-sm">
-                    <button id="prevPage" class="bg-blue-300 rounded px-2 py-1 md:px-4 md:py-2 hover:bg-blue-500" onclick="changePage(-1)" disabled>Previous</button>
-                    <span id="page-info" class="self-center"></span>
-                    <button id="nextPage" class="bg-blue-300 rounded px-2 py-1 md:px-4 md:py-2 hover:bg-blue-500" onclick="changePage(1)">Next</button>
+                <div class="flex justify-between mt-4 text-xs md:text-sm sm:pb-3">
+                    <button id="prevPage" class="bg-blue-300 rounded-lg px-2 py-1 md:px-4 md:py-2 hover:bg-blue-500" onclick="changePage(-1)" disabled>Previous</button>
+                    <span id="page-info" class="text-xs self-center"></span>
+                    <button id="nextPage" class="bg-blue-300 rounded-lg  px-2 py-1 md:px-4 md:py-2 hover:bg-blue-500" onclick="changePage(1)">Next</button>
                 </div>
             </div>
             
