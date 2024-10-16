@@ -306,11 +306,11 @@ function displayWeatherData(weatherDataArray) {
     const row = `
     <tr>
       <td class="w-18 text-sm py-2 px-1">${i + 1}</td>
-      <td class="text-sm py-2 px-1">${date}</td>
-      <td class="text-sm py-2 px-1">${temp}°C</td>
-      <td class="text-sm py-2 px-1">${humidity}%</td>
-      <td class="text-sm py-2 px-1">${windSpeed} km/h</td>
-      <td class="text-sm pl-2 py-2 px-1 no-wrap">${description}</td>
+      <td class="text-xs py-2 px-1">${date}</td>
+      <td class="text-xs py-2 px-1">${temp}°C</td>
+      <td class="text-xs py-2 px-1">${humidity}%</td>
+      <td class="text-xs py-2 px-1">${windSpeed} km/h</td>
+      <td class="text-xs pl-2 pt-2 px-1 no-wrap">${description}</td>
     </tr>
     `;
     tbody.innerHTML += row; // Add the row to the table body
